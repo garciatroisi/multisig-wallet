@@ -83,6 +83,7 @@ describe("MultisigWallet contract", function () {
     expect(approvers).to.not.deep.include.members([recipient1.address]);
 
     const transferCount = await multisigWallet.getTransferCount();
+    expect(transferCount).to.equal(0);
     checkContractBalance(multisigWallet, "10.0");
   });
 
@@ -104,7 +105,7 @@ describe("MultisigWallet contract", function () {
       )
     )
       .to.emit(multisigWallet, "Submission")
-      .withArgs(transferIndex, approver1.address, transferAmount, description);
+      .withArgs(transferIndex, recipient1.address, transferAmount, description);
 
     // Approve the transfer:  emit Confirmation(msg.sender, _id);
     await expect(
@@ -121,5 +122,91 @@ describe("MultisigWallet contract", function () {
       .withArgs(transferIndex, approver2.address);
 
     checkContractBalance(multisigWallet, "9.5");
+  });
+
+  it("should not allow additional confirmations after execution", async () => {
+    const { multisigWallet, approver1, approver2, recipient1 } =
+      await loadFixture(deployFixture);
+
+    const transferAmount = parseEther("0.5");
+    const description = "Test Transfer";
+
+    const transferIndex = 0;
+
+    await expect(
+      multisigWallet.createTransfer(
+        recipient1.address,
+        transferAmount,
+        description
+      )
+    ).to.emit(multisigWallet, "Submission");
+
+    await expect(
+      multisigWallet.connect(approver1).approveTransfer(transferIndex)
+    ).to.emit(multisigWallet, "Confirmation");
+
+    await expect(
+      multisigWallet.connect(approver2).approveTransfer(transferIndex)
+    ).to.emit(multisigWallet, "Execution");
+
+    // Try to confirm again after execution
+    await expect(
+      multisigWallet.connect(approver1).approveTransfer(transferIndex)
+    ).to.be.revertedWith("Address already confirmed this transfer");
+
+    // Ensure that the transfer count remains 1
+    const transferCount = await multisigWallet.getTransferCount();
+    expect(transferCount).to.equal(1);
+  });
+
+  it("should revert execution if there are insufficient contract funds", async () => {
+    const { multisigWallet, approver1, approver2, recipient1 } =
+      await loadFixture(deployFixture);
+
+    const transferAmount = parseEther("15.0");
+    const description = "Test Transfer";
+
+    const transferIndex = 0;
+
+    await expect(
+      multisigWallet
+        .connect(approver2)
+        .createTransfer(recipient1.address, transferAmount, description)
+    )
+      .to.emit(multisigWallet, "Submission")
+      .withArgs(transferIndex, recipient1.address, transferAmount, description);
+
+    await expect(
+      multisigWallet.connect(approver1).approveTransfer(transferIndex)
+    ).to.emit(multisigWallet, "Confirmation");
+
+    await expect(
+      multisigWallet.connect(approver2).approveTransfer(transferIndex)
+    ).to.be.revertedWith(
+      "Transfer reverted. Insufficient contract balance for transfer."
+    );
+
+    // Ensure that the transfer count remains 1
+    const transferCount = await multisigWallet.getTransferCount();
+    expect(transferCount).to.equal(1);
+  });
+
+  it("should emit Deposit event when receiving funds", async () => {
+    const { multisigWallet, approver1 } = await loadFixture(deployFixture);
+
+    // The amount of ethers to send to the contract.
+    const depositAmount = parseEther("1.0");
+
+    // Perform a transaction to send ethers to the contract.
+    const deployedAddress = await multisigWallet.getAddress();
+    const tx = {
+      to: deployedAddress,
+      value: depositAmount,
+    };
+
+    // Verify that the Deposit event was emitted.
+    await expect(approver1.sendTransaction(tx))
+      .to.emit(multisigWallet, "Deposit")
+      .withArgs(approver1.address, tx.value);
   });
 });

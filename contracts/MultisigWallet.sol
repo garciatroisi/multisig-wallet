@@ -6,11 +6,14 @@ contract MultisigWallet {
     mapping(address => bool) public isApprover;
 
     event Deposit(address indexed sender, uint256 amount);
-    event Submission(uint256 indexed transferIndex, address indexed sender, uint256 amount, string description);
+    event Submission(
+        uint256 indexed transferIndex,
+        address indexed to,
+        uint256 amount,
+        string description
+    );
     event Confirmation(address indexed sender, uint256 indexed transferIndex);
     event Execution(uint256 indexed transferIndex, address indexed sender);
-    event ExecutionFailure(uint256 indexed transferIndex, address indexed sender, string reason);
-
 
     struct Transfer {
         uint256 id;
@@ -43,7 +46,10 @@ contract MultisigWallet {
     }
 
     modifier notConfirmed(uint256 _id) {
-        require(!approvals[msg.sender][_id], "Address already confirmed this transfer");
+        require(
+            !approvals[msg.sender][_id],
+            "Address already confirmed this transfer"
+        );
         _;
     }
 
@@ -67,29 +73,29 @@ contract MultisigWallet {
         emit Deposit(msg.sender, msg.value);
     }
 
-    function createTransfer(address payable _to, uint256 _amount, string memory _description)
-        external
-        onlyApprover
-    {
+    function createTransfer(
+        address payable _to,
+        uint256 _amount,
+        string memory _description
+    ) external onlyApprover {
         uint256 transferIndex = transfers.length;
-        transfers.push(Transfer({
-            id: transferIndex,
-            description: _description,
-            to: _to,
-            amount: _amount,
-            sent: false,
-            approvalsCount: 0
-        }));
 
-        emit Submission(transferIndex, msg.sender, _amount, _description);
+        transfers.push(
+            Transfer({
+                id: transferIndex,
+                description: _description,
+                to: _to,
+                amount: _amount,
+                sent: false,
+                approvalsCount: 0
+            })
+        );
+        emit Submission(transferIndex, _to, _amount, _description);
     }
 
-    function approveTransfer(uint256 _id)
-        external
-        onlyApprover
-        transferExists(_id)
-        notConfirmed(_id)
-    {
+    function approveTransfer(
+        uint256 _id
+    ) external onlyApprover transferExists(_id) notConfirmed(_id) {
         Transfer storage transfer = transfers[_id];
 
         approvals[msg.sender][_id] = true;
@@ -110,14 +116,12 @@ contract MultisigWallet {
         return approvers;
     }
 
-    function executeTransfer(uint256 _id) private
-        transferExists(_id)
-        notSent(_id)
-        returns (bool)
-    {
+    function executeTransfer(
+        uint256 _id
+    ) private transferExists(_id) notSent(_id) returns (bool) {
         Transfer storage transfer = transfers[_id];
-        transfer.sent = true; 
-        
+        transfer.sent = true;
+
         if (address(this).balance >= transfer.amount) {
             if (transfer.to.send(transfer.amount)) {
                 emit Execution(_id, msg.sender);
@@ -125,14 +129,14 @@ contract MultisigWallet {
             } else {
                 // Rollback changes if the transfer fails
                 transfer.sent = false;
-                emit ExecutionFailure(_id, msg.sender, "Transfer failed. Recipient may not accept funds.");
                 return false;
             }
         }
-   
+
         // Rollback changes if there is insufficient contract balance
         transfer.sent = false;
-        emit ExecutionFailure(_id, msg.sender, "Insufficient contract balance for transfer.");       
-        return false;
+        revert(
+            "Transfer reverted. Insufficient contract balance for transfer."
+        );
     }
 }
