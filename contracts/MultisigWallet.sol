@@ -14,7 +14,6 @@ contract MultisigWallet {
     );
     event Confirmation(address indexed sender, uint256 indexed transferIndex);
     event Execution(uint256 indexed transferIndex, address indexed sender);
-
     struct Transfer {
         uint256 id;
         string description;
