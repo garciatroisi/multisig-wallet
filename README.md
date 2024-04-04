@@ -57,6 +57,11 @@ To run the tests, make sure you have Hardhat installed and run the following com
 npx hardhat test
 ```
 
+# Coverage
+```bash
+npx hardhat coverage
+```
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
