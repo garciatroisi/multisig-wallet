@@ -88,7 +88,7 @@ export class Dapp extends React.Component {
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
-            <h1>MATIC</h1>
+            <h1>MATIC BALANCE</h1>
             <p>
               Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
               <b>{this.state.balance.toString()} MATIC</b>.
@@ -334,7 +334,25 @@ export class Dapp extends React.Component {
   }
 
   async _switchChain() {
-    const chainIdHex = `0x${MUMBAI_NETWORK_ID.toString(16)}`;
+    // You can get network info form https://chainid.network/chains.json
+    const decimalNumber = parseInt(MUMBAI_NETWORK_ID, 10);
+    const chainIdHex = ethers.utils.hexValue(decimalNumber).toString();
+    await window.ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [
+        {
+          chainId: chainIdHex,
+          chainName: "Mumbai",
+          rpcUrls: ["https://rpc.ankr.com/polygon_mumbai/"],
+          nativeCurrency: {
+            name: "MATIC",
+            symbol: "MATIC",
+            decimals: 18,
+          },
+          blockExplorerUrls: ["https:/mumbai.polygonscan.com/"],
+        },
+      ],
+    });
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
