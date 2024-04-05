@@ -8,7 +8,7 @@ import { ethers } from "ethers";
 // logic. They just render HTML.
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
-import { ApproverList } from "./ApproverList";
+import { ContractData } from "./ContractData";
 import { Loading } from "./Loading";
 // import { Transfer } from "./Transfer";
 // import { TransactionErrorMessage } from "./TransactionErrorMessage";
@@ -84,7 +84,7 @@ export class Dapp extends React.Component {
       <div className="container p-4">
         <div className="row">
           <div className="col-12">
-            <h1>MATIC BALANCE</h1>
+            <h1>MultisigWallet Dash</h1>
             <p>
               Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
               <b>{this.state.balance.toString()} MATIC</b>.
@@ -96,7 +96,7 @@ export class Dapp extends React.Component {
 
         <div className="row">
           <div className="col-12">
-            <ApproverList provider={this._provider} />
+            <ContractData provider={this._provider} />
           </div>
         </div>
 

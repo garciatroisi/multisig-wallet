@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import MultisigWallet from "../contracts/MultisigWallet.json";
 
-export const ApproverList = ({ provider }) => {
+export const ContractData = ({ provider }) => {
   const [approvers, setApprovers] = useState([]);
   const [quorum, setQuorum] = useState(null);
+  const [balance, setBalance] = useState(null);
 
   const fetchContractData = async () => {
     try {
@@ -13,12 +14,20 @@ export const ApproverList = ({ provider }) => {
         MultisigWallet.abi,
         provider
       );
+
+      // Fetching Approvers
       const approvers = await contract.getApprovers();
       setApprovers(approvers);
+
+      // Fetching Quorum
       const quorum = await contract.quorum();
       setQuorum(quorum.toString());
+
+      // Fetching Balance
+      const balanceValue = await provider.getBalance(MultisigWallet.address);
+      setBalance(ethers.utils.formatEther(balanceValue));
     } catch (error) {
-      console.error("Error fetching approvers:", error);
+      console.error("Error fetching contract data:", error);
     }
   };
 
@@ -43,6 +52,13 @@ export const ApproverList = ({ provider }) => {
         <div>
           <h2>Quorum:</h2>
           <p>{quorum}</p>
+        </div>
+      )}
+
+      {balance !== null && (
+        <div>
+          <h2>Contract Balance:</h2>
+          <p>{balance} MATIC</p>
         </div>
       )}
     </div>
