@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 // We'll use ethers to interact with the Ethereum network and our contract
 import { ethers } from "ethers";
@@ -10,27 +10,17 @@ import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { ContractData } from "./ContractData";
 import { Loading } from "./Loading";
-// import { Transfer } from "./Transfer";
-// import { TransactionErrorMessage } from "./TransactionErrorMessage";
-// import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
-// import { NoTokensMessage } from "./NoTokensMessage";
 
 // This is the default id used by the Mumbai Network
 const MUMBAI_NETWORK_ID = "80001";
-
-// This is an error code that indicates that the user canceled a transaction
-const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 // This component is in charge of doing these things:
 //   1. It connects to the user's wallet
 //   2. Initializes ethers and the Multisig contract
 //   3. Polls the user balance to keep it updated.
-//   4. Transfers tokens by sending transactions
+//   4. Polls the contract balance to show.
 //   5. Renders the whole application
 //
-// Note that (3) and (4) are specific of this sample application, but they show
-// you how to keep your Dapp and contract's state in sync, and how to send a
-// transaction.
 export class Dapp extends React.Component {
   constructor(props) {
     super(props);
@@ -97,32 +87,6 @@ export class Dapp extends React.Component {
         <div className="row">
           <div className="col-12">
             <ContractData provider={this._provider} />
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="col-12">
-            {/*
-              If the user has no tokens, we don't show the Transfer form
-            */}
-            {/* {this.state.balance.eq(0) && (
-              <NoTokensMessage selectedAddress={this.state.selectedAddress} />
-            )} */}
-
-            {/*
-              This component displays a form that the user can use to send a 
-              transaction and transfer some tokens.
-              The component doesn't have logic, it just calls the transferTokens
-              callback.
-            */}
-            {/* {this.state.balance.gt(0) && (
-              <Transfer
-                transferTokens={(to, amount) =>
-                  this._transferTokens(to, amount)
-                }
-                tokenSymbol={this.state.tokenData.symbol}
-              />
-            )} */}
           </div>
         </div>
       </div>
